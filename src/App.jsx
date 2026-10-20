@@ -13,12 +13,21 @@ import {
   Database,
   Globe,
   Layers,
-  ShieldCheck,
   Server,
-  Sparkles,
-  ExternalLink
+  ExternalLink,
+  Menu,
+  X,
+  Send,
+  Download,
+  Eye,
+  CheckCircle2,
+  Clock,
+  Briefcase,
+  GraduationCap
 } from 'lucide-react';
 import './App.css';
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 // SVG Brand Icons
 const GithubIcon = ({ size = 18, color = "currentColor" }) => (
@@ -39,7 +48,13 @@ const LinkedinIcon = ({ size = 18, color = "currentColor" }) => (
 export default function App() {
   const [copied, setCopied] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
-  const [activeSection, setActiveSection] = useState('main');
+  const [activeSection, setActiveSection] = useState('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeProjectFilter, setActiveProjectFilter] = useState('all');
+  const [selectedCert, setSelectedCert] = useState(null);
+  const [resumeModalOpen, setResumeModalOpen] = useState(false);
+  const [contactFormStatus, setContactFormStatus] = useState('');
+  const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
 
   // Update live Karnataka time (IST: UTC+5:30)
   useEffect(() => {
@@ -49,6 +64,7 @@ export default function App() {
         timeZone: 'Asia/Kolkata',
         hour: '2-digit',
         minute: '2-digit',
+        second: '2-digit',
         hour12: true
       };
       setCurrentTime(new Intl.DateTimeFormat('en-US', options).format(now));
@@ -61,16 +77,16 @@ export default function App() {
 
   // Track active section on scroll
   useEffect(() => {
-    const sectionIds = ['main', 'projects', 'experience', 'academics', 'certificates', 'contact'];
+    const sectionIds = ['home', 'about', 'projects', 'experience', 'certificates', 'contact'];
     const handleScroll = () => {
-      const scrollY = window.scrollY + 160;
+      const scrollY = window.scrollY + 180;
       for (const section of sectionIds) {
         const el = document.getElementById(section);
         if (el) {
           const top = el.offsetTop;
           const height = el.offsetHeight;
           if (scrollY >= top && scrollY < top + height) {
-            setActiveSection(section === 'academics' ? 'experience' : section);
+            setActiveSection(section);
             break;
           }
         }
@@ -83,770 +99,554 @@ export default function App() {
 
   const scrollToSection = (id) => {
     setActiveSection(id);
+    setMobileMenuOpen(false);
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const handleCopyEmail = () => {
+  const handleCopyEmail = (e) => {
+    if (e) e.preventDefault();
     navigator.clipboard.writeText('nnaik5253@gmail.com');
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    if (!contactFormData.email || !contactFormData.name || !contactFormData.message) return;
+    
+    // Construct mailto link with encoded message
+    const subject = encodeURIComponent(`Portfolio Inquiry from ${contactFormData.name}`);
+    const body = encodeURIComponent(`Name: ${contactFormData.name}\nEmail: ${contactFormData.email}\n\nMessage:\n${contactFormData.message}`);
+    window.location.href = `mailto:nnaik5253@gmail.com?subject=${subject}&body=${body}`;
+    
+    setContactFormStatus('sent');
+    setTimeout(() => {
+      setContactFormStatus('');
+      setContactFormData({ name: '', email: '', message: '' });
+    }, 4000);
+  };
+
+  const techStackList = [
+    { name: 'HTML5', category: 'frontend' },
+    { name: 'CSS', category: 'frontend' },
+    { name: 'Javascript', category: 'frontend' },
+    { name: 'Node.js', category: 'backend' },
+    { name: 'React', category: 'frontend' },
+    { name: 'Git', category: 'tools' },
+    { name: 'Github', category: 'tools' },
+    { name: 'FastAPI', category: 'backend' },
+    { name: 'Python', category: 'backend' },
+    { name: 'Docker', category: 'devops' },
+    { name: 'AWS (EC2, S3)', category: 'cloud' },
+    { name: 'PostgreSQL', category: 'db' },
+    { name: 'Supabase', category: 'db' },
+    { name: 'C++', category: 'systems' },
+    { name: 'REST APIs', category: 'backend' }
+  ];
+
+  const projects = [
+    {
+      id: 'chaduranga',
+      title: 'Chaduranga — Chess Tournament Engine',
+      category: 'research',
+      categoryLabel: 'Research & OSS',
+      badge: 'Scopus Indexed · AITC-2026',
+      badgeIcon: <Award size={13} />,
+      desc: 'Designed a graph-driven Swiss-system pairing engine for automated round pairings and live tournament standings. Built scalable REST APIs with FastAPI & Supabase. Published with Grenze Scientific Society and presented at the 4th International Conference on Advances in Information, Telecommunication and Computing (AITC-2026).',
+      image: '/chaduranga_certificate.jpg',
+      isCertPreview: true,
+      paperUrl: 'https://thegrenze.com/abstract/journal/7895',
+      certUrl: '/chaduranga_certificate.jpg',
+      githubUrl: 'https://github.com/Nandan6626',
+      tech: ['Python', 'FastAPI', 'Graph Theory', 'Supabase', 'Docker', 'Scopus']
+    },
+    {
+      id: 'mediguardian',
+      title: 'MediGuardian AI — Healthcare Operating System',
+      category: 'ai',
+      categoryLabel: 'AI / Healthcare',
+      desc: 'Smart Healthcare Operating System built for elderly users featuring intelligent medication tracking, automated missed-dose alerts, real-time caregiver updates, and emergency healthcare access.',
+      image: '/mediguardian.png',
+      liveUrl: 'https://medi-guardian-ai.vercel.app/auth/login',
+      githubUrl: 'https://github.com/Nandan6626/medi_guardian_ai',
+      tech: ['React', 'Node.js', 'FastAPI', 'AI Diagnostics', 'Tailwind', 'Vercel']
+    },
+    {
+      id: 'skillbridge',
+      title: 'SkillBridge — Intelligent Workforce Platform',
+      category: 'fullstack',
+      categoryLabel: 'Full Stack',
+      desc: 'Multi-role workforce ecosystem connecting customers, skilled workers, and corporate teams with FastAPI, Supabase, Google OAuth, and an algorithmic Trust Score system.',
+      image: '/skillbridge.jpg',
+      githubUrl: 'https://github.com/Nandan6626/SKILLBRIDGE',
+      tech: ['FastAPI', 'Supabase', 'Python', 'Google OAuth', 'REST APIs']
+    },
+    {
+      id: 'global-bank',
+      title: 'Global Digital Bank — Banking Simulation System',
+      category: 'backend',
+      categoryLabel: 'Python · OOP',
+      desc: 'Robust banking simulation application handling end-to-end banking operations — multi-tier account management, secure deposits, fund transfers, and encrypted transaction ledger using strict OOP paradigms.',
+      image: '/global_digital_bank.jpg',
+      githubUrl: 'https://github.com/Nandan6626/Global-Digital-Bank1/tree/main/Global-Digital-Bank',
+      tech: ['Python', 'OOP', 'SQL', 'Security Audits', 'Architecture']
+    }
+  ];
+
+  const filteredProjects = activeProjectFilter === 'all' 
+    ? projects 
+    : projects.filter(p => p.category === activeProjectFilter || (activeProjectFilter === 'backend' && (p.category === 'backend' || p.category === 'research')));
+
+  const certificates = [
+    {
+      title: 'Chaduranga Research Paper',
+      issuer: 'Grenze Scientific Society · AITC-2026',
+      tag: 'Scopus Indexed',
+      icon: <BookOpen size={14} />,
+      date: '2026',
+      image: '/chaduranga_certificate.jpg',
+      verifyUrl: 'https://thegrenze.com/abstract/journal/7895'
+    },
+    {
+      title: 'Data Analytics with Python',
+      issuer: 'NPTEL · IIT Roorkee (Elite Score: 70%)',
+      tag: 'Elite Tier',
+      icon: <Award size={14} />,
+      date: '2026',
+      image: '/nptel_data_analytics.jpg',
+      roll: 'Roll: NPTEL26CS86S560400005'
+    },
+    {
+      title: 'Machine Learning with Python',
+      issuer: 'IBM Skills Network · Coursera',
+      tag: 'Machine Learning',
+      icon: <Cpu size={14} />,
+      date: 'IBM',
+      image: '/cert_ibm_ml.jpg',
+      verifyUrl: 'https://coursera.org/verify/7PX1SX6XEJVQ'
+    },
+    {
+      title: 'Introduction to Artificial Intelligence (AI)',
+      issuer: 'IBM Skills Network · Coursera',
+      tag: 'AI & ML',
+      icon: <Cpu size={14} />,
+      date: 'IBM',
+      image: '/cert_ibm_ai.jpg',
+      verifyUrl: 'https://coursera.org/verify/DF5T0UD0LHG0'
+    },
+    {
+      title: 'Networking Fundamentals',
+      issuer: 'Packt Publishing · Coursera',
+      tag: 'Networks',
+      icon: <Globe size={14} />,
+      date: 'Packt',
+      image: '/cert_networking_fundamentals.jpg',
+      verifyUrl: 'https://coursera.org/verify/0N3KZVU469LX'
+    },
+    {
+      title: 'RPA Basics & UiPath Automation',
+      issuer: 'UiPath Automation · Coursera',
+      tag: 'Robotics & RPA',
+      icon: <Layers size={14} />,
+      date: 'UiPath',
+      image: '/cert_uipath_rpa.jpg',
+      verifyUrl: 'https://coursera.org/verify/W5EAGF4XDCKX'
+    }
+  ];
+
   return (
-    <div className="portfolio-container fade-in">
+    <div className="portfolio-app fade-in">
       {/* =========================================================
-          SAME THEME FLOATING BENTO NAVBAR
+          TOP NAVIGATION BAR (Matches Jensen Omega header)
           ========================================================= */}
-      <header className="navbar-wrapper">
-        <nav className="bento-navbar" aria-label="Main Navigation">
+      <header className="site-header">
+        <div className="header-inner">
           <button 
             type="button" 
-            className="navbar-brand"
-            onClick={() => scrollToSection('main')}
+            className="brand-logo"
+            onClick={() => scrollToSection('home')}
+            aria-label="Navigate to Home"
           >
-            <span className="navbar-brand-spark" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8L12 0Z" />
-              </svg>
-            </span>
-            <span>Nandan Manjunath Naik</span>
+            <span className="brand-name">Nandan Naik</span>
+            <span className="brand-dot"></span>
           </button>
 
-          <ul className="navbar-nav">
-            <li>
+          {/* Desktop Navigation */}
+          <nav className="desktop-nav" aria-label="Main Navigation">
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'home' ? 'active' : ''}`}
+              onClick={() => scrollToSection('home')}
+            >
+              Home
+            </button>
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'about' ? 'active' : ''}`}
+              onClick={() => scrollToSection('about')}
+            >
+              About
+            </button>
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'projects' ? 'active' : ''}`}
+              onClick={() => scrollToSection('projects')}
+            >
+              Projects
+            </button>
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'experience' ? 'active' : ''}`}
+              onClick={() => scrollToSection('experience')}
+            >
+              Experience
+            </button>
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'certificates' ? 'active' : ''}`}
+              onClick={() => scrollToSection('certificates')}
+            >
+              Certificates
+            </button>
+            <button 
+              type="button" 
+              className={`nav-item ${activeSection === 'contact' ? 'active' : ''}`}
+              onClick={() => scrollToSection('contact')}
+            >
+              Contacts
+            </button>
+          </nav>
+
+          {/* Header Action Button */}
+          <div className="header-actions">
+            <button 
+              type="button" 
+              className="btn-header-resume"
+              onClick={() => setResumeModalOpen(true)}
+            >
+              <FileText size={14} />
+              <span>Resume</span>
+            </button>
+
+            {/* Mobile Hamburger Button */}
+            <button 
+              type="button" 
+              className="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="mobile-drawer">
+            <div className="mobile-drawer-links">
               <button 
                 type="button" 
-                className={`nav-link ${activeSection === 'main' ? 'active' : ''}`}
-                onClick={() => scrollToSection('main')}
+                className={`mobile-nav-item ${activeSection === 'home' ? 'active' : ''}`}
+                onClick={() => scrollToSection('home')}
               >
-                Main
+                Home
               </button>
-            </li>
-            <li>
               <button 
                 type="button" 
-                className={`nav-link ${activeSection === 'projects' ? 'active' : ''}`}
+                className={`mobile-nav-item ${activeSection === 'about' ? 'active' : ''}`}
+                onClick={() => scrollToSection('about')}
+              >
+                About
+              </button>
+              <button 
+                type="button" 
+                className={`mobile-nav-item ${activeSection === 'projects' ? 'active' : ''}`}
                 onClick={() => scrollToSection('projects')}
               >
                 Projects
               </button>
-            </li>
-            <li>
               <button 
                 type="button" 
-                className={`nav-link ${activeSection === 'experience' ? 'active' : ''}`}
+                className={`mobile-nav-item ${activeSection === 'experience' ? 'active' : ''}`}
                 onClick={() => scrollToSection('experience')}
               >
                 Experience
               </button>
-            </li>
-            <li>
               <button 
                 type="button" 
-                className={`nav-link ${activeSection === 'certificates' ? 'active' : ''}`}
+                className={`mobile-nav-item ${activeSection === 'certificates' ? 'active' : ''}`}
                 onClick={() => scrollToSection('certificates')}
               >
                 Certificates
               </button>
-            </li>
-            <li>
               <button 
                 type="button" 
-                className={`nav-link ${activeSection === 'contact' ? 'active' : ''}`}
+                className={`mobile-nav-item ${activeSection === 'contact' ? 'active' : ''}`}
                 onClick={() => scrollToSection('contact')}
               >
-                Contact
+                Contacts
               </button>
-            </li>
-          </ul>
-
-          <a 
-            href="mailto:nnaik5253@gmail.com?subject=Regarding%20Software%20Engineering%20Opportunity&body=Hi%20Nandan,%0D%0A%0D%0AI%20reviewed%20your%20portfolio%20and%20would%20like%20to%20connect%20with%20you%20regarding..." 
-            className="navbar-cta"
-          >
-            <Mail size={14} />
-            <span>Get in touch</span>
-          </a>
-        </nav>
+              
+              <div className="mobile-drawer-cta">
+                <button 
+                  type="button" 
+                  className="btn-primary" 
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => { setMobileMenuOpen(false); scrollToSection('contact'); }}
+                >
+                  Got a project?
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  style={{ width: '100%', justifyContent: 'center', marginTop: '10px' }}
+                  onClick={() => { setMobileMenuOpen(false); setResumeModalOpen(true); }}
+                >
+                  My resume
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* =========================================================
-          HERO BENTO GRID (NANDAN MANJUNATH NAIK)
+          HERO SECTION (Strictly matching reference layout)
           ========================================================= */}
-      <section id="main" className="hero-section" aria-label="Introduction">
-        {/* Top Row: Large Intro + Profile Image */}
-        <div className="hero-grid-top">
-          {/* Main Profile Info Card */}
-          <div className="bento-card hero-intro-card interactive">
-            <div>
-              <span className="eyebrow">Available · Graduating 2027</span>
-              <h1 className="hero-name">Nandan Manjunath Naik</h1>
-              <p className="hero-bio">
-                Pursuing Computer Science & Business Systems at PES College of Engineering, Mandya (CGPA: 8.33/10, graduating 2027). Built and shipped production RESTful APIs and microservices using Python (FastAPI/Pydantic), SQL, Docker, and AWS across two engineering internships. Author of a peer-reviewed research paper on a graph- and algorithm-driven Swiss-system pairing engine.
-              </p>
+      <section id="home" className="hero-section" aria-label="Hero Overview">
+        <div className="hero-container">
+          <div className="hero-content-col">
+            <div className="hero-greeting-box">
+              <span className="hero-hello">Hello <span className="accent-dot">.</span></span>
             </div>
 
-            <div className="hero-footer-row">
-              <div className="hero-spark-icon" aria-hidden="true">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8L12 0Z" />
+            <div className="hero-subline-row">
+              <span className="hero-orange-line" aria-hidden="true"></span>
+              <span className="hero-im-name">I'm Nandan</span>
+            </div>
+
+            <h1 className="hero-main-title">
+              Software Developer
+            </h1>
+
+            <p className="hero-bio-text">
+              Computer Science & Business Systems engineer at PESCE Mandya (CGPA: 8.33). 
+              Specializing in scalable backend microservices, graph algorithms, and full-stack systems with Python, FastAPI, React, and AWS.
+            </p>
+
+            <div className="hero-btn-group">
+              <button 
+                type="button" 
+                className="btn-primary hero-cta-btn"
+                onClick={() => scrollToSection('contact')}
+              >
+                <span>Got a project?</span>
+              </button>
+
+              <button 
+                type="button" 
+                className="btn-secondary hero-resume-btn"
+                onClick={() => setResumeModalOpen(true)}
+              >
+                <span>My resume</span>
+              </button>
+            </div>
+
+            {/* Quick Live Status Hint */}
+            <div className="hero-live-indicator">
+              <span className="live-pulse-dot" aria-hidden="true"></span>
+              <span className="live-status-text">Available for Opportunities · Karnataka, IN {currentTime && `(${currentTime})`}</span>
+            </div>
+          </div>
+
+          {/* Right Column: Hero Portrait in Glowing Circle Halo (with < > chevrons) */}
+          <div className="hero-avatar-col">
+            <div className="avatar-halo-wrapper">
+              {/* Left Angle Chevron Accent */}
+              <div className="geometric-chevron left-chevron" aria-hidden="true">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M15 18L9 12L15 6" />
+                </svg>
+              </div>
+
+              {/* Glowing Concentric Double Rings */}
+              <div className="glowing-halo-ring outer-ring"></div>
+              <div className="glowing-halo-ring inner-ring"></div>
+              
+              {/* Photo Frame */}
+              <div className="avatar-image-container">
+                <img 
+                  src="/nandan-photo.jpg" 
+                  alt="Nandan Manjunath Naik — Software Developer" 
+                  className="avatar-photo"
+                  loading="eager"
+                />
+              </div>
+
+              {/* Right Angle Chevron Accent */}
+              <div className="geometric-chevron right-chevron" aria-hidden="true">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M9 18L15 12L9 6" />
                 </svg>
               </div>
             </div>
           </div>
-
-          {/* User's Actual Profile Photo Card */}
-          <div className="bento-card hero-image-card interactive">
-            <img 
-              src="/nandan-photo.jpg" 
-              alt="Nandan Manjunath Naik portrait" 
-              className="hero-image"
-            />
-            <div className="online-badge">
-              <span className="online-dot" aria-hidden="true"></span>
-              <span>Available</span>
-            </div>
-          </div>
         </div>
+      </section>
 
-        {/* Bottom Row: 3 Bento Badges */}
-        <div className="hero-grid-sub">
-          {/* Location */}
-          <div className="bento-card hero-sub-card interactive">
-            <span className="eyebrow">Where</span>
-            <div>
-              <div className="hero-sub-val">Mandya, IN</div>
-              <div className="hero-sub-hint">Karnataka · GMT+5:30 {currentTime && `· ${currentTime}`}</div>
-            </div>
-          </div>
-
-          {/* Building (Tinted Accent) */}
-          <div className="bento-card hero-sub-card tinted interactive">
-            <span className="eyebrow" style={{ color: '#6366F1' }}>Building</span>
-            <p className="hero-sub-text">
-              Chaduranga: Graph-driven Swiss-system pairing engine & microservices
-            </p>
-          </div>
-
-          {/* Academic CGPA */}
-          <div className="bento-card hero-sub-card interactive">
-            <span className="eyebrow">Academic CGPA</span>
-            <div className="hero-sub-val-row">
-              <span className="hero-sub-val">8.33</span>
-              <span className="hero-sub-val-star" aria-hidden="true">★</span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-subtle)', marginLeft: '4px' }}>/ 10</span>
-            </div>
+      {/* =========================================================
+          TECH SKILLS MARQUEE / STRIP (Matches reference tech bar)
+          ========================================================= */}
+      <section className="tech-bar-section" aria-label="Technologies Strip">
+        <div className="tech-bar-inner">
+          <div className="tech-items-row">
+            {techStackList.map((tech, idx) => (
+              <span key={idx} className="tech-badge-item">
+                {tech.name}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
       {/* =========================================================
-          SELECTED PROJECTS SECTION
+          ABOUT ME SECTION (Matches reference 2-column layout)
           ========================================================= */}
-      <section id="projects" className="projects-section" aria-label="Selected Projects">
-        <div className="section-header">
-          <span className="eyebrow">Selected Projects</span>
-          <h2 className="section-title">Projects</h2>
-        </div>
+      <section id="about" className="about-section" aria-label="About Me">
+        <div className="about-container">
+          {/* Left Column: Timeline Service Cards with Orange Progress Line */}
+          <div className="about-services-col">
+            <div className="services-timeline-track">
+              <div className="services-vertical-line" aria-hidden="true"></div>
 
-        <div className="projects-grid">
-          {/* Project 1: Chaduranga (Featured Research & Publication with Certificate) */}
-          <article 
-            className="bento-card project-card project-tatkal has-bg interactive"
-            style={{ 
-              backgroundImage: 'url("https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=1200&q=80")' 
-            }}
-          >
-            <div className="chaduranga-details-col">
-              <div className="project-top-bar" style={{ marginBottom: '14px' }}>
-                <span className="project-pill">Research & OSS</span>
-                <span className="project-metric" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <Award size={13} />
-                  <span>Scopus Indexed · AITC-2026</span>
-                </span>
-              </div>
-
-              <div className="project-bottom-info" style={{ marginTop: 0 }}>
-                <h3 className="project-title" style={{ fontSize: '1.65rem' }}>
-                  Chaduranga — Chess Tournament Engine
-                </h3>
-                <p className="project-desc" style={{ marginBottom: '16px' }}>
-                  Designed a graph-driven Swiss-system pairing engine for automated round pairings and live standings. 
-                  Built scalable REST APIs with FastAPI & Supabase. Published with <strong>Grenze Scientific Society</strong> and presented at the 4th International Conference on Advances in Information, Telecommunication and Computing (AITC-2026).
-                </p>
-
-                <div className="chaduranga-links-group">
-                  <a 
-                    href="https://thegrenze.com/abstract/journal/7895" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="chaduranga-paper-btn"
-                  >
-                    <span>Read Research Paper</span>
-                    <ExternalLink size={13} />
-                  </a>
-
-                  <a 
-                    href="/chaduranga_certificate.jpg" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="chaduranga-cert-btn"
-                  >
-                    <span>Presentation Certificate</span>
-                    <ArrowUpRight size={14} />
-                  </a>
+              {/* Service 1: Website Development */}
+              <div className="service-timeline-item">
+                <div className="timeline-dot-wrapper">
+                  <span className="timeline-orange-dot"></span>
                 </div>
-              </div>
-            </div>
-
-            <div className="chaduranga-cert-showcase">
-              <a 
-                href="/chaduranga_certificate.jpg" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="chaduranga-cert-link"
-                title="Click to view full-resolution Certificate of Presentation"
-              >
-                <div className="chaduranga-cert-frame">
-                  <img 
-                    src="/chaduranga_certificate.jpg" 
-                    alt="Certificate of Presentation & Publication - Chaduranga Research Paper, AITC-2026" 
-                    className="chaduranga-cert-img" 
-                  />
-                  <div className="chaduranga-cert-overlay">
-                    <span className="chaduranga-cert-badge">
-                      <span>Presentation & Publication Certificate</span>
-                      <ArrowUpRight size={12} />
-                    </span>
+                <div className="service-card">
+                  <div className="service-icon-box">
+                    <Code2 size={24} className="service-icon" />
+                  </div>
+                  <div className="service-details">
+                    <h3 className="service-title">Website Development</h3>
+                    <p className="service-description">
+                      High-performance, dynamic user interfaces built with modern React, JavaScript, sleek CSS, and responsive state architecture.
+                    </p>
                   </div>
                 </div>
-              </a>
-            </div>
-          </article>
-
-          {/* Project 2: MediGuardianAI with Image & Live Demo */}
-          <article className="bento-card project-card project-lumber interactive">
-            <div className="project-top-bar">
-              <span className="project-pill">AI / Health</span>
-              <div className="project-links-group">
-                <a 
-                  href="https://medi-guardian-ai.vercel.app/auth/login" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="project-live-btn"
-                >
-                  <span>Live Demo</span>
-                  <ExternalLink size={11} />
-                </a>
-                <a 
-                  href="https://github.com/Nandan6626/medi_guardian_ai" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="project-metric"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <span>GitHub</span>
-                  <ArrowUpRight size={13} />
-                </a>
               </div>
-            </div>
 
-            <div className="project-preview-img-box">
-              <img 
-                src="/mediguardian.png" 
-                alt="MediGuardian AI — Healthcare Operating System" 
-                className="project-preview-img"
-              />
-            </div>
-
-            <div className="project-bottom-info" style={{ marginTop: 0 }}>
-              <h3 className="project-title">MediGuardian AI</h3>
-              <p className="project-desc">
-                Healthcare Operating System for elderly users featuring intelligent medication tracking, 
-                missed-dose alerts, real-time caregiver updates, and emergency healthcare access.
-              </p>
-            </div>
-          </article>
-
-          {/* Project 3: SkillBridge with Image */}
-          <article className="bento-card project-card project-nudge interactive">
-            <div className="project-top-bar">
-              <span className="project-pill">Full Stack</span>
-              <a 
-                href="https://github.com/Nandan6626/SKILLBRIDGE" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="project-metric"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>GitHub</span>
-                <ArrowUpRight size={13} />
-              </a>
-            </div>
-
-            <div className="project-preview-img-box">
-              <img 
-                src="/skillbridge.jpg" 
-                alt="SkillBridge — Intelligent Workforce Management Platform" 
-                className="project-preview-img"
-              />
-            </div>
-
-            <div className="project-bottom-info" style={{ marginTop: 0 }}>
-              <h3 className="project-title">SkillBridge</h3>
-              <p className="project-desc">
-                Multi-role workforce platform connecting customers, workers, and companies with FastAPI, Supabase, Google OAuth, and an algorithmic worker Trust Score.
-              </p>
-            </div>
-          </article>
-
-          {/* Project 4: Global Digital Bank with Image */}
-          <article className="bento-card project-card project-bank interactive">
-            <div className="project-top-bar">
-              <span className="project-pill">Python · OOP</span>
-              <a 
-                href="https://github.com/Nandan6626/Global-Digital-Bank1/tree/main/Global-Digital-Bank" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="project-metric"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>GitHub</span>
-                <ArrowUpRight size={13} />
-              </a>
-            </div>
-
-            <div className="project-preview-img-box">
-              <img 
-                src="/global_digital_bank.jpg" 
-                alt="Global Digital Bank — Banking Simulation System" 
-                className="project-preview-img"
-              />
-            </div>
-
-            <div className="project-bottom-info" style={{ marginTop: 0 }}>
-              <h3 className="project-title">Global Digital Bank</h3>
-              <p className="project-desc">
-                Python-based banking application simulating real-world operations — account management, deposits, withdrawals, fund transfers, and transaction history using robust OOP design.
-              </p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      {/* =========================================================
-          STACK SECTION (FROM TECHNICAL SKILLS)
-          ========================================================= */}
-      <section className="stack-section" aria-label="Technical Stack">
-        <div className="section-header">
-          <span className="eyebrow">Technical Skills</span>
-          <h2 className="section-title">What's running in the background</h2>
-        </div>
-
-        <div className="stack-grid">
-          {/* Tile 1: Languages (Tinted) */}
-          <div className="bento-card stack-card tinted interactive">
-            <span className="eyebrow" style={{ color: '#6366F1' }}>Languages</span>
-            <div>
-              <div className="stack-val">C · C++ · Python · JavaScript</div>
-              <div className="stack-sub">Strong OOP & algorithmic foundation</div>
-            </div>
-          </div>
-
-          {/* Tile 2: Full Stack & Frameworks */}
-          <div className="bento-card stack-card interactive">
-            <span className="eyebrow">Full Stack & Frameworks</span>
-            <div>
-              <div className="stack-val">React.js · FastAPI · Node.js</div>
-              <div className="stack-sub">Pydantic · Express.js · REST API design</div>
-            </div>
-          </div>
-
-          {/* Tile 3: Distributed & Cloud */}
-          <div className="bento-card stack-card interactive">
-            <span className="eyebrow">Cloud & Distributed</span>
-            <div>
-              <div className="stack-val">Docker · AWS (EC2, S3)</div>
-              <div className="stack-sub">Microservices · Multi-tiered systems</div>
-            </div>
-          </div>
-
-          {/* Tile 4: Databases */}
-          <div className="bento-card stack-card interactive">
-            <span className="eyebrow">Databases & Storage</span>
-            <div>
-              <div className="stack-val">PostgreSQL · MySQL · Supabase</div>
-              <div className="stack-sub">MongoDB · Normalized Relational Schemas</div>
-            </div>
-          </div>
-
-          {/* Tile 5: CS Foundations (Tinted) */}
-          <div className="bento-card stack-card tinted interactive">
-            <span className="eyebrow" style={{ color: '#6366F1' }}>CS Foundations</span>
-            <div>
-              <div className="stack-val">DSA · OS · Networks · DBMS</div>
-              <div className="stack-sub">Complexity Analysis · System Design</div>
-            </div>
-          </div>
-
-          {/* Tile 6: AI-Native Engineering */}
-          <div className="bento-card stack-card interactive">
-            <span className="eyebrow">AI-Native & Tooling</span>
-            <div>
-              <div className="stack-val">LangGraph · Cursor · Copilot</div>
-              <div className="stack-sub">Claude Code · Critical Code Verification</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================
-          WORKED ON / INTERNSHIPS SECTION
-          ========================================================= */}
-      <section id="experience" className="experience-section" aria-label="Internships & Work Experience">
-        <div className="section-header">
-          <span className="eyebrow">Work History</span>
-          <h2 className="section-title">Internships & practical experience</h2>
-        </div>
-
-        <div className="experience-list">
-          {/* Internship 1: Talenciaglobal */}
-          <div className="bento-card experience-card interactive">
-            <div className="exp-company-group">
-              <div className="exp-avatar">T</div>
-              <div>
-                <div className="exp-company-name">Talenciaglobal</div>
-                <div className="exp-period">Apr 2026 – May 2026</div>
-              </div>
-            </div>
-            <div className="exp-role">Software Engineering Intern</div>
-            <p className="exp-note">
-              Built and deployed production RESTful APIs using FastAPI, Pydantic, Python, and SQL within a distributed microservices architecture. Standardized testing and deployment with Docker and integrated LangChain-based AI workflows.
-            </p>
-          </div>
-
-          {/* Internship 2: Employability.life */}
-          <div className="bento-card experience-card interactive">
-            <div className="exp-company-group">
-              <div className="exp-avatar">E</div>
-              <div>
-                <div className="exp-company-name">Employability.life</div>
-                <div className="exp-period">Aug 2025 – Sep 2025</div>
-              </div>
-            </div>
-            <div className="exp-role">Cybersecurity & AWS Intern</div>
-            <p className="exp-note">
-              Deployed and maintained cloud infrastructure on AWS (EC2, S3), applying least-privilege IAM roles and access policies. Built scalable cloud backend solutions independently navigating ambiguous problem spaces.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================
-          ACADEMICS / FORMAL EDUCATION SECTION
-          ========================================================= */}
-      <section id="academics" className="academics-section" aria-label="Academics & Formal Education">
-        <div className="section-header">
-          <span className="eyebrow">Academic Background</span>
-          <h2 className="section-title">Academics & formal education</h2>
-        </div>
-
-        <div className="academics-grid">
-          {/* Main Degree: PESCE Mandya */}
-          <div className="bento-card academic-card-featured interactive">
-            <div className="academic-top">
-              <div className="exp-company-group">
-                <div className="exp-avatar academic-avatar">P</div>
-                <div>
-                  <h3 className="exp-company-name">PES College of Engineering, Mandya</h3>
-                  <div className="exp-period">2023 — 2027 · Autonomous Institute under VTU</div>
+              {/* Service 2: App & Backend Development */}
+              <div className="service-timeline-item">
+                <div className="timeline-dot-wrapper">
+                  <span className="timeline-orange-dot"></span>
+                </div>
+                <div className="service-card">
+                  <div className="service-icon-box">
+                    <Server size={24} className="service-icon" />
+                  </div>
+                  <div className="service-details">
+                    <h3 className="service-title">App & Backend Development</h3>
+                    <p className="service-description">
+                      Production RESTful APIs, distributed microservices, and graph algorithm engines built with FastAPI, Python, Pydantic, and LangChain.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="academic-cgpa-badge">
-                <span className="cgpa-label">Current CGPA</span>
-                <span className="cgpa-value">8.33 / 10</span>
-              </div>
-            </div>
 
-            <div className="academic-body">
-              <div className="academic-degree-title">
-                Bachelor of Engineering (B.E.) — Computer Science & Business Systems
-              </div>
-              <p className="academic-desc">
-                Rigorous four-year engineering curriculum combining deep foundational computer science, systems engineering, complexity analysis, and modern enterprise software architectures.
-              </p>
-              <div className="academic-coursework">
-                <span className="coursework-label">Core Coursework:</span>
-                <div className="coursework-tags">
-                  <span className="coursework-tag">Data Structures & Algorithms</span>
-                  <span className="coursework-tag">Object-Oriented Design</span>
-                  <span className="coursework-tag">Operating Systems</span>
-                  <span className="coursework-tag">Relational DBMS</span>
-                  <span className="coursework-tag">Computer Networks</span>
-                  <span className="coursework-tag">Distributed Systems</span>
+              {/* Service 3: Website Hosting & Cloud */}
+              <div className="service-timeline-item">
+                <div className="timeline-dot-wrapper">
+                  <span className="timeline-orange-dot"></span>
+                </div>
+                <div className="service-card">
+                  <div className="service-icon-box">
+                    <Database size={24} className="service-icon" />
+                  </div>
+                  <div className="service-details">
+                    <h3 className="service-title">Website Hosting & Cloud</h3>
+                    <p className="service-description">
+                      Docker containerization, AWS cloud infrastructure (EC2, S3), relational databases (PostgreSQL/MySQL), and Supabase integration.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Secondary & Pre-University Grid */}
-          <div className="academic-sub-grid">
-            {/* Pre-University */}
-            <div className="bento-card academic-sub-card interactive">
-              <div className="academic-sub-top">
-                <span className="cert-badge-tag" style={{ background: 'rgba(22, 21, 26, 0.05)', color: 'var(--text-main)' }}>
-                  <Award size={12} />
-                  <span>Pre-University (12th)</span>
-                </span>
-                <span className="academic-score-pill">77.16%</span>
+          {/* Right Column: About Me Bio, Metrics & Brand Badge */}
+          <div className="about-bio-col">
+            <h2 className="section-heading-white">About me</h2>
+            
+            <p className="about-narrative-text">
+              I am a Computer Science & Business Systems engineering student at PES College of Engineering, Mandya (graduating 2027 with an 8.33/10 CGPA). 
+              My passion lies in architecting high-efficiency backend services, graph algorithms, and intuitive modern web systems from scratch.
+            </p>
+            <p className="about-narrative-text" style={{ marginTop: '12px' }}>
+              I have shipped production APIs and microservices across two engineering internships (Talenciaglobal & Employability.life) and published a peer-reviewed Scopus-indexed research paper on a Swiss-system chess tournament pairing engine (AITC-2026).
+            </p>
+
+            {/* Metrics Row (Matches: 120+ Completed Projects | 95% Client satisfaction | 10+ Years of experience) */}
+            <div className="about-stats-grid">
+              <div className="stat-card">
+                <div className="stat-number">
+                  15 <span className="stat-orange-plus">+</span>
+                </div>
+                <div className="stat-label">Completed Projects</div>
               </div>
-              <div className="academic-sub-middle">
-                <h4 className="academic-school-name">Govt. PU College, Honnavar</h4>
-                <p className="academic-school-sub">Department of Pre-University Education · PCMB</p>
+
+              <div className="stat-card">
+                <div className="stat-number">
+                  8.33 <span className="stat-orange-plus">★</span>
+                </div>
+                <div className="stat-label">Academic CGPA</div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-number">
+                  2 <span className="stat-orange-plus">+</span>
+                </div>
+                <div className="stat-label">Industry Internships</div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-number">
+                  6 <span className="stat-orange-plus">+</span>
+                </div>
+                <div className="stat-label">Verified Certifications</div>
               </div>
             </div>
 
-            {/* High School */}
-            <div className="bento-card academic-sub-card interactive">
-              <div className="academic-sub-top">
-                <span className="cert-badge-tag" style={{ background: 'rgba(99, 102, 241, 0.08)', color: 'var(--accent)' }}>
-                  <Award size={12} />
-                  <span>Secondary School (10th)</span>
-                </span>
-                <span className="academic-score-pill highlight">86.50%</span>
-              </div>
-              <div className="academic-sub-middle">
-                <h4 className="academic-school-name">Sharavati High School, Honnavar</h4>
-                <p className="academic-school-sub">Karnataka Secondary Education Examination Board · Distinction</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            {/* Social / Portfolio Brand Badges (Matches Behance pill button in reference image) */}
+            <div className="about-badges-group">
+              <a 
+                href="https://github.com/Nandan6626" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="brand-pill-btn github-badge"
+              >
+                <div className="brand-pill-icon-box github-icon-bg">
+                  <GithubIcon size={18} color="#ffffff" />
+                </div>
+                <span className="brand-pill-text">github.com/Nandan6626</span>
+                <ArrowUpRight size={14} className="brand-pill-arrow" />
+              </a>
 
-      {/* =========================================================
-          CERTIFICATES & ACHIEVEMENTS SECTION
-          ========================================================= */}
-      <section id="certificates" className="certificates-section" aria-label="Certificates & Accreditations">
-        <div className="section-header">
-          <span className="eyebrow">Certifications & Achievements</span>
-          <h2 className="section-title">Verified research, honors, and credentials</h2>
-        </div>
-
-        <div className="certificates-grid">
-          {/* Achievement 1: Chaduranga Research Paper */}
-          <div className="bento-card cert-card tinted interactive">
-            <div className="cert-top">
-              <span className="cert-badge-tag">
-                <BookOpen size={13} />
-                <span>Publication</span>
-              </span>
-              <span className="cert-date">Scopus</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">Chaduranga Research Paper</h3>
-              <p className="cert-issuer">Grenze Scientific Society · AITC-2026</p>
-            </div>
-            <div className="cert-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
               <a 
-                href="/chaduranga_certificate.jpg" 
+                href="https://www.linkedin.com/in/nandan-naik-43a659295/" 
                 target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-secondary-link"
-                title="View Presentation & Publication Certificate"
+                rel="noopener noreferrer" 
+                className="brand-pill-btn linkedin-badge"
               >
-                <span>Presentation Cert</span>
-                <ArrowUpRight size={12} />
-              </a>
-              <a 
-                href="https://thegrenze.com/abstract/journal/7895" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-verify-link"
-                title="Read Research Paper on Grenze"
-              >
-                <span>Read Paper</span>
-                <ExternalLink size={13} />
-              </a>
-            </div>
-          </div>
-
-          {/* Achievement 2: NPTEL Elite Certification */}
-          <a 
-            href="/nptel_data_analytics.jpg" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="bento-card cert-card interactive"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-            title="Click to view official NPTEL Elite Certificate"
-          >
-            <div className="cert-top">
-              <span className="cert-badge-tag" style={{ background: 'rgba(22, 21, 26, 0.05)', color: 'var(--text-main)' }}>
-                <Award size={13} />
-                <span>Elite Tier (Score: 70%)</span>
-              </span>
-              <span className="cert-date">IIT Roorkee</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">Data Analytics with Python</h3>
-              <p className="cert-issuer">NPTEL · Indian Institute of Technology Roorkee</p>
-            </div>
-            <div className="cert-footer">
-              <span className="cert-id">Roll: NPTEL26CS86S560400005</span>
-              <span className="cert-verify-link">
-                <span>View Certificate</span>
-                <ArrowUpRight size={14} />
-              </span>
-            </div>
-          </a>
-
-          {/* Achievement 3: IBM Machine Learning with Python */}
-          <div className="bento-card cert-card interactive">
-            <div className="cert-top">
-              <span className="cert-badge-tag" style={{ background: 'rgba(99, 102, 241, 0.08)', color: 'var(--accent)' }}>
-                <Cpu size={13} />
-                <span>Machine Learning</span>
-              </span>
-              <span className="cert-date">IBM</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">Machine Learning with Python</h3>
-              <p className="cert-issuer">IBM Skills Network · Offered through Coursera</p>
-            </div>
-            <div className="cert-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <a 
-                href="/cert_ibm_ml.jpg" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-secondary-link"
-                title="View Full Certificate Image"
-              >
-                <span>View Cert</span>
-                <ArrowUpRight size={12} />
-              </a>
-              <a 
-                href="https://coursera.org/verify/7PX1SX6XEJVQ" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-verify-link"
-                title="Verify on Coursera"
-              >
-                <span>Verify Online</span>
-                <ExternalLink size={13} />
-              </a>
-            </div>
-          </div>
-
-          {/* Achievement 3: IBM Introduction to AI */}
-          <div className="bento-card cert-card interactive">
-            <div className="cert-top">
-              <span className="cert-badge-tag" style={{ background: 'rgba(22, 21, 26, 0.05)', color: 'var(--text-main)' }}>
-                <Cpu size={13} />
-                <span>AI & ML</span>
-              </span>
-              <span className="cert-date">IBM</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">Introduction to Artificial Intelligence (AI)</h3>
-              <p className="cert-issuer">IBM Skills Network · Offered through Coursera</p>
-            </div>
-            <div className="cert-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <a 
-                href="/cert_ibm_ai.jpg" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-secondary-link"
-                title="View Full Certificate Image"
-              >
-                <span>View Cert</span>
-                <ArrowUpRight size={12} />
-              </a>
-              <a 
-                href="https://coursera.org/verify/DF5T0UD0LHG0" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-verify-link"
-                title="Verify on Coursera"
-              >
-                <span>Verify Online</span>
-                <ExternalLink size={13} />
-              </a>
-            </div>
-          </div>
-
-          {/* Achievement 4: Packt Networking Fundamentals */}
-          <div className="bento-card cert-card interactive">
-            <div className="cert-top">
-              <span className="cert-badge-tag" style={{ background: 'rgba(22, 21, 26, 0.05)', color: 'var(--text-main)' }}>
-                <Globe size={13} />
-                <span>Networks</span>
-              </span>
-              <span className="cert-date">Packt</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">Networking Fundamentals</h3>
-              <p className="cert-issuer">Packt Publishing · Offered through Coursera</p>
-            </div>
-            <div className="cert-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <a 
-                href="/cert_networking_fundamentals.jpg" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-secondary-link"
-                title="View Full Certificate Image"
-              >
-                <span>View Cert</span>
-                <ArrowUpRight size={12} />
-              </a>
-              <a 
-                href="https://coursera.org/verify/0N3KZVU469LX" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-verify-link"
-                title="Verify on Coursera"
-              >
-                <span>Verify Online</span>
-                <ExternalLink size={13} />
-              </a>
-            </div>
-          </div>
-
-          {/* Achievement 5: UiPath RPA & Robotics */}
-          <div className="bento-card cert-card interactive">
-            <div className="cert-top">
-              <span className="cert-badge-tag" style={{ background: 'rgba(99, 102, 241, 0.08)', color: 'var(--accent)' }}>
-                <Layers size={13} />
-                <span>Robotics & RPA</span>
-              </span>
-              <span className="cert-date">UiPath</span>
-            </div>
-            <div className="cert-middle">
-              <h3 className="cert-title">RPA Basics and Introduction to UiPath</h3>
-              <p className="cert-issuer">UiPath Automation · Offered through Coursera</p>
-            </div>
-            <div className="cert-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <a 
-                href="/cert_uipath_rpa.jpg" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-secondary-link"
-                title="View Full Certificate Image"
-              >
-                <span>View Cert</span>
-                <ArrowUpRight size={12} />
-              </a>
-              <a 
-                href="https://coursera.org/verify/W5EAGF4XDCKX" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="cert-verify-link"
-                title="Verify on Coursera"
-              >
-                <span>Verify Online</span>
-                <ExternalLink size={13} />
+                <div className="brand-pill-icon-box linkedin-icon-bg">
+                  <LinkedinIcon size={18} color="#ffffff" />
+                </div>
+                <span className="brand-pill-text">linkedin.com/in/nandan-naik</span>
+                <ArrowUpRight size={14} className="brand-pill-arrow" />
               </a>
             </div>
           </div>
@@ -854,101 +654,707 @@ export default function App() {
       </section>
 
       {/* =========================================================
-          CONTACT & FOOTER
+          PROJECTS SECTION (With vertical orange accent line)
           ========================================================= */}
-      <section id="contact" className="bento-card contact-section interactive" aria-label="Contact">
-        <div className="contact-top">
-          <div className="contact-heading-group">
-            <span className="eyebrow">Get in touch</span>
-            <h2 className="contact-heading">Let's build scalable systems together.</h2>
-            <div className="contact-pin-row">
-              <MapPin size={16} color="#6366F1" />
-              <span>Mandya, Karnataka, India</span>
-              <span style={{ margin: '0 6px', color: 'var(--text-subtle)' }}>•</span>
-              <Phone size={14} color="#6366F1" />
-              <span>+91 8431976921</span>
-            </div>
-          </div>
+      <section id="projects" className="projects-showcase-section" aria-label="Projects Showcase">
+        {/* Section Heading with the reference style's vertical orange line */}
+        <div className="section-centered-header">
+          <div className="header-vertical-orange-line" aria-hidden="true"></div>
+          <h2 className="section-title-large">Projects</h2>
+          <p className="section-subtitle-muted">
+            Highlighted software engineering projects, algorithmic engines, and production systems.
+          </p>
 
-          <a 
-            href="mailto:nnaik5253@gmail.com?subject=Regarding%20Software%20Engineering%20Opportunity&body=Hi%20Nandan,%0D%0A%0D%0AI%20reviewed%20your%20portfolio%20and%20would%20like%20to%20connect%20with%20you%20regarding..." 
-            className="email-cta-btn"
-            onClick={() => {
-              try {
-                navigator.clipboard.writeText('nnaik5253@gmail.com');
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2500);
-              } catch (e) {}
-            }}
-            aria-label="Email Nandan Naik"
-          >
-            {copied ? <Check size={18} /> : <Mail size={18} />}
-            <span>{copied ? 'Opening Email & Copied!' : 'Email me'}</span>
-          </a>
+          {/* Filter Pills */}
+          <div className="project-filter-tabs">
+            <button 
+              type="button" 
+              className={`filter-pill ${activeProjectFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveProjectFilter('all')}
+            >
+              All Work
+            </button>
+            <button 
+              type="button" 
+              className={`filter-pill ${activeProjectFilter === 'research' ? 'active' : ''}`}
+              onClick={() => setActiveProjectFilter('research')}
+            >
+              Research & OSS
+            </button>
+            <button 
+              type="button" 
+              className={`filter-pill ${activeProjectFilter === 'ai' ? 'active' : ''}`}
+              onClick={() => setActiveProjectFilter('ai')}
+            >
+              AI & Health
+            </button>
+            <button 
+              type="button" 
+              className={`filter-pill ${activeProjectFilter === 'fullstack' ? 'active' : ''}`}
+              onClick={() => setActiveProjectFilter('fullstack')}
+            >
+              Full Stack
+            </button>
+            <button 
+              type="button" 
+              className={`filter-pill ${activeProjectFilter === 'backend' ? 'active' : ''}`}
+              onClick={() => setActiveProjectFilter('backend')}
+            >
+              Backend & OOP
+            </button>
+          </div>
         </div>
 
-        {/* Social / Links */}
-        <div className="contact-links-grid">
-          <a 
-            href="https://github.com/Nandan6626" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="social-link-card"
-          >
-            <div>
-              <span className="social-label">GitHub</span>
-              <div className="social-handle">@Nandan6626</div>
-            </div>
-            <GithubIcon size={18} color="rgba(22, 21, 26, 0.4)" />
-          </a>
+        {/* Projects Grid */}
+        <div className="projects-container">
+          <div className="projects-cards-grid">
+            {filteredProjects.map((proj) => (
+              <article key={proj.id} className="project-display-card">
+                {/* Image / Preview banner */}
+                <div className="project-image-banner">
+                  <img 
+                    src={proj.image} 
+                    alt={proj.title} 
+                    className="project-banner-img"
+                    onClick={() => {
+                      if (proj.isCertPreview) {
+                        setSelectedCert({
+                          title: 'Chaduranga Research Paper Presentation & Publication Certificate',
+                          issuer: 'Grenze Scientific Society · AITC-2026',
+                          image: proj.certUrl,
+                          verifyUrl: proj.paperUrl
+                        });
+                      }
+                    }}
+                    style={{ cursor: proj.isCertPreview ? 'pointer' : 'default' }}
+                  />
+                  <div className="project-banner-overlay">
+                    <span className="project-category-tag">{proj.categoryLabel}</span>
+                    {proj.badge && (
+                      <span className="project-highlight-badge">
+                        {proj.badgeIcon}
+                        <span>{proj.badge}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-          <a 
-            href="https://www.linkedin.com/in/nandan-naik-43a659295/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="social-link-card"
-          >
-            <div>
-              <span className="social-label">LinkedIn</span>
-              <div className="social-handle">in/nandan-naik</div>
-            </div>
-            <LinkedinIcon size={18} color="rgba(22, 21, 26, 0.4)" />
-          </a>
+                {/* Content */}
+                <div className="project-card-body">
+                  <h3 className="project-card-title">{proj.title}</h3>
+                  <p className="project-card-desc">{proj.desc}</p>
 
-          <a 
-            href="mailto:nnaik5253@gmail.com" 
-            className="social-link-card"
-          >
-            <div>
-              <span className="social-label">Email</span>
-              <div className="social-handle">nnaik5253@gmail.com</div>
-            </div>
-            <Mail size={18} color="rgba(22, 21, 26, 0.4)" />
-          </a>
+                  {/* Tech stack badges */}
+                  <div className="project-tech-pills">
+                    {proj.tech.map((t, idx) => (
+                      <span key={idx} className="tech-pill">{t}</span>
+                    ))}
+                  </div>
 
-          <a 
-            href="tel:+918431976921" 
-            className="social-link-card"
-          >
-            <div>
-              <span className="social-label">Phone</span>
-              <div className="social-handle">+91 8431976921</div>
-            </div>
-            <Phone size={18} color="rgba(22, 21, 26, 0.4)" />
-          </a>
+                  {/* Action links */}
+                  <div className="project-action-buttons">
+                    {proj.paperUrl && (
+                      <a 
+                        href={proj.paperUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="project-btn-primary"
+                      >
+                        <span>Read Paper</span>
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+
+                    {proj.certUrl && (
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedCert({
+                          title: 'Chaduranga Research Presentation Certificate',
+                          issuer: 'Grenze Scientific Society · AITC-2026',
+                          image: proj.certUrl,
+                          verifyUrl: proj.paperUrl
+                        })}
+                        className="project-btn-secondary"
+                      >
+                        <Eye size={14} />
+                        <span>View Cert</span>
+                      </button>
+                    )}
+
+                    {proj.liveUrl && (
+                      <a 
+                        href={proj.liveUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="project-btn-primary"
+                      >
+                        <span>Live Demo</span>
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+
+                    {proj.githubUrl && (
+                      <a 
+                        href={proj.githubUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="project-btn-secondary"
+                      >
+                        <GithubIcon size={14} />
+                        <span>Source Code</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Footer bar */}
-      <footer className="footer-bar">
-        <span>© {new Date().getFullYear()} Nandan Manjunath Naik. All rights reserved.</span>
-        <span>Built with React · Bento Portfolio</span>
+      {/* =========================================================
+          WORK EXPERIENCE & INTERNSHIPS SECTION
+          ========================================================= */}
+      <section id="experience" className="experience-section-custom" aria-label="Experience & Education">
+        <div className="section-centered-header">
+          <div className="header-vertical-orange-line" aria-hidden="true"></div>
+          <h2 className="section-title-large">Experience & Academics</h2>
+          <p className="section-subtitle-muted">
+            Professional internships, computer science foundations, and academic achievements.
+          </p>
+        </div>
+
+        <div className="experience-container">
+          <div className="dual-experience-grid">
+            {/* Column 1: Internships */}
+            <div className="exp-column">
+              <div className="exp-column-header">
+                <Briefcase size={20} className="column-icon" />
+                <h3 className="column-title">Work Experience</h3>
+              </div>
+
+              <div className="exp-card-list">
+                {/* Internship 1: Talenciaglobal */}
+                <div className="exp-modern-card">
+                  <div className="exp-card-top">
+                    <div className="exp-card-avatar">T</div>
+                    <div>
+                      <h4 className="exp-company-heading">Talenciaglobal</h4>
+                      <span className="exp-role-title">Software Engineering Intern</span>
+                    </div>
+                    <span className="exp-duration-badge">Apr 2026 – May 2026</span>
+                  </div>
+                  <p className="exp-card-summary">
+                    Engineered and deployed production RESTful APIs using FastAPI, Pydantic, Python, and SQL within a distributed microservices architecture. Standardized containerized testing and deployment with Docker and integrated LangChain AI workflows.
+                  </p>
+                  <div className="exp-skill-tags">
+                    <span>FastAPI</span>
+                    <span>Docker</span>
+                    <span>Python</span>
+                    <span>Microservices</span>
+                    <span>SQL</span>
+                  </div>
+                </div>
+
+                {/* Internship 2: Employability.life */}
+                <div className="exp-modern-card">
+                  <div className="exp-card-top">
+                    <div className="exp-card-avatar">E</div>
+                    <div>
+                      <h4 className="exp-company-heading">Employability.life</h4>
+                      <span className="exp-role-title">Cybersecurity & AWS Intern</span>
+                    </div>
+                    <span className="exp-duration-badge">Aug 2025 – Sep 2025</span>
+                  </div>
+                  <p className="exp-card-summary">
+                    Configured and maintained cloud infrastructure on AWS (EC2, S3), applying least-privilege IAM access policies. Built scalable cloud backend systems while navigating ambiguous real-world requirements.
+                  </p>
+                  <div className="exp-skill-tags">
+                    <span>AWS (EC2, S3)</span>
+                    <span>Cloud Security</span>
+                    <span>IAM Policies</span>
+                    <span>Backend</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Academics */}
+            <div className="exp-column">
+              <div className="exp-column-header">
+                <GraduationCap size={20} className="column-icon" />
+                <h3 className="column-title">Academic Background</h3>
+              </div>
+
+              <div className="exp-card-list">
+                {/* B.E. PESCE Mandya */}
+                <div className="exp-modern-card academic-highlight-card">
+                  <div className="exp-card-top">
+                    <div className="exp-card-avatar academic-badge-icon">P</div>
+                    <div>
+                      <h4 className="exp-company-heading">PES College of Engineering, Mandya</h4>
+                      <span className="exp-role-title">B.E. — Computer Science & Business Systems</span>
+                    </div>
+                    <span className="academic-cgpa-pill">8.33 / 10 CGPA</span>
+                  </div>
+                  <div className="academic-meta-line">2023 – 2027 · Autonomous Institute under VTU</div>
+                  <p className="exp-card-summary">
+                    Rigorous engineering degree combining foundational theoretical computer science, systems design, complexity analysis, and modern enterprise software architectures.
+                  </p>
+                  <div className="academic-topics-grid">
+                    <span>Data Structures & Algorithms</span>
+                    <span>Operating Systems</span>
+                    <span>Computer Networks</span>
+                    <span>Relational DBMS</span>
+                    <span>Object-Oriented Design</span>
+                    <span>Distributed Systems</span>
+                  </div>
+                </div>
+
+                {/* Secondary Schooling */}
+                <div className="academic-sub-cards-row">
+                  <div className="academic-mini-card">
+                    <span className="mini-card-badge">PUC (12th) · 77.16%</span>
+                    <h5 className="mini-card-school">Govt. PU College, Honnavar</h5>
+                    <p className="mini-card-sub">PCMB · Pre-University Education</p>
+                  </div>
+                  <div className="academic-mini-card">
+                    <span className="mini-card-badge highlight">SSLC (10th) · 86.50%</span>
+                    <h5 className="mini-card-school">Sharavati High School</h5>
+                    <p className="mini-card-sub">KSEEB · Distinction</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          CERTIFICATES & ACCREDITATIONS SECTION
+          ========================================================= */}
+      <section id="certificates" className="certificates-section-custom" aria-label="Certificates and Credentials">
+        <div className="section-centered-header">
+          <div className="header-vertical-orange-line" aria-hidden="true"></div>
+          <h2 className="section-title-large">Certificates & Credentials</h2>
+          <p className="section-subtitle-muted">
+            Verified academic honors, peer-reviewed publications, and industry technical accreditations.
+          </p>
+        </div>
+
+        <div className="certificates-container">
+          <div className="certificates-grid">
+            {certificates.map((cert, index) => (
+              <div key={index} className="cert-modern-card">
+                <div className="cert-card-header">
+                  <span className="cert-tag-pill">
+                    {cert.icon}
+                    <span>{cert.tag}</span>
+                  </span>
+                  <span className="cert-year-label">{cert.date}</span>
+                </div>
+
+                <div className="cert-card-main">
+                  <h4 className="cert-name-heading">{cert.title}</h4>
+                  <p className="cert-issuer-name">{cert.issuer}</p>
+                  {cert.roll && <p className="cert-roll-number">{cert.roll}</p>}
+                </div>
+
+                <div className="cert-card-actions">
+                  <button 
+                    type="button" 
+                    className="cert-action-btn primary"
+                    onClick={() => setSelectedCert(cert)}
+                  >
+                    <Eye size={13} />
+                    <span>View Certificate</span>
+                  </button>
+
+                  {cert.verifyUrl && (
+                    <a 
+                      href={cert.verifyUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="cert-action-btn secondary"
+                      title="Verify online"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Verify</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          CONTACT SECTION (Matches "Got a project?" aesthetic)
+          ========================================================= */}
+      <section id="contact" className="contact-section-custom" aria-label="Get In Touch">
+        <div className="section-centered-header">
+          <div className="header-vertical-orange-line" aria-hidden="true"></div>
+          <h2 className="section-title-large">Contacts</h2>
+          <p className="section-subtitle-muted">
+            Have a project in mind, an engineering role, or want to collaborate? Let's connect.
+          </p>
+        </div>
+
+        <div className="contact-wrapper">
+          <div className="contact-main-grid">
+            {/* Left Column: Direct Info & Quick Copy */}
+            <div className="contact-info-panel">
+              <span className="contact-eyebrow">Direct Contact</span>
+              <h3 className="contact-callout-title">Let's build scalable systems together.</h3>
+              <p className="contact-subtext">
+                I am actively seeking software engineering internships and full-time opportunities. Reach out via email, phone, or send a message below.
+              </p>
+
+              <div className="contact-items-list">
+                <div className="contact-item-row">
+                  <div className="contact-icon-pill">
+                    <Mail size={18} />
+                  </div>
+                  <div className="contact-item-content">
+                    <span className="contact-item-label">Email Address</span>
+                    <a href="mailto:nnaik5253@gmail.com" className="contact-item-val link-val">
+                      nnaik5253@gmail.com
+                    </a>
+                  </div>
+                </div>
+
+                <div className="contact-item-row">
+                  <div className="contact-icon-pill">
+                    <Phone size={18} />
+                  </div>
+                  <div className="contact-item-content">
+                    <span className="contact-item-label">Phone & WhatsApp</span>
+                    <a href="tel:+918431976921" className="contact-item-val link-val">
+                      +91 8431976921
+                    </a>
+                  </div>
+                </div>
+
+                <div className="contact-item-row">
+                  <div className="contact-icon-pill">
+                    <MapPin size={18} />
+                  </div>
+                  <div className="contact-item-content">
+                    <span className="contact-item-label">Location</span>
+                    <span className="contact-item-val">Mandya, Karnataka, India</span>
+                  </div>
+                </div>
+
+                <div className="contact-item-row">
+                  <div className="contact-icon-pill">
+                    <Clock size={18} />
+                  </div>
+                  <div className="contact-item-content">
+                    <span className="contact-item-label">Current Local Time</span>
+                    <span className="contact-item-val">{currentTime || 'IST (UTC+5:30)'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="contact-quick-buttons">
+                <button 
+                  type="button" 
+                  className={`btn-primary ${copied ? 'copied-btn' : ''}`}
+                  onClick={handleCopyEmail}
+                >
+                  {copied ? <Check size={16} /> : <Mail size={16} />}
+                  <span>{copied ? 'Email Copied!' : 'Copy Email Address'}</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  className="btn-secondary"
+                  onClick={() => setResumeModalOpen(true)}
+                >
+                  <FileText size={16} />
+                  <span>View Resume</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Send a Message Form */}
+            <div className="contact-form-panel">
+              <h4 className="form-panel-title">Send a Direct Message</h4>
+              <p className="form-panel-desc">
+                Fill out the quick form and it will prepare an email directly to my inbox.
+              </p>
+
+              {contactFormStatus === 'sent' ? (
+                <div className="form-success-banner">
+                  <CheckCircle2 size={32} className="success-icon" />
+                  <h4>Message Prepared!</h4>
+                  <p>Your default email client has been launched with your inquiry. Looking forward to talking soon!</p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="contact-form">
+                  <div className="form-group">
+                    <label htmlFor="contact-name">Your Name</label>
+                    <input 
+                      id="contact-name"
+                      type="text" 
+                      required
+                      placeholder="e.g. Alex Jensen"
+                      value={contactFormData.name}
+                      onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="contact-email">Your Email</label>
+                    <input 
+                      id="contact-email"
+                      type="email" 
+                      required
+                      placeholder="e.g. alex@company.com"
+                      value={contactFormData.email}
+                      onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="contact-msg">Message or Project Inquiry</label>
+                    <textarea 
+                      id="contact-msg"
+                      rows="4"
+                      required
+                      placeholder="Hello Nandan, I saw your portfolio and would like to discuss..."
+                      value={contactFormData.message}
+                      onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
+                      className="form-textarea"
+                    />
+                  </div>
+
+                  <button type="submit" className="btn-primary form-submit-btn">
+                    <Send size={16} />
+                    <span>Send Message</span>
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          SITE FOOTER
+          ========================================================= */}
+      <footer className="site-footer">
+        <div className="footer-container">
+          <div className="footer-left">
+            <span className="footer-brand">Nandan Manjunath Naik</span>
+            <span className="footer-copyright">
+              © {CURRENT_YEAR} All rights reserved. Designed & built with React.
+            </span>
+          </div>
+
+          <div className="footer-social-links">
+            <a 
+              href="https://github.com/Nandan6626" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="footer-social-icon"
+              title="GitHub Profile"
+            >
+              <GithubIcon size={18} />
+            </a>
+            <a 
+              href="https://www.linkedin.com/in/nandan-naik-43a659295/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="footer-social-icon"
+              title="LinkedIn Profile"
+            >
+              <LinkedinIcon size={18} />
+            </a>
+            <a 
+              href="mailto:nnaik5253@gmail.com" 
+              className="footer-social-icon"
+              title="Send Email"
+            >
+              <Mail size={18} />
+            </a>
+            <a 
+              href="tel:+918431976921" 
+              className="footer-social-icon"
+              title="Call Phone"
+            >
+              <Phone size={18} />
+            </a>
+          </div>
+        </div>
       </footer>
 
-      {/* Toast popup */}
+      {/* =========================================================
+          CERTIFICATE LIGHTBOX MODAL
+          ========================================================= */}
+      {selectedCert && (
+        <div className="modal-backdrop" onClick={() => setSelectedCert(null)}>
+          <div className="modal-dialog cert-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">{selectedCert.title}</h3>
+                <p className="modal-subtitle">{selectedCert.issuer}</p>
+              </div>
+              <button 
+                type="button" 
+                className="modal-close-btn"
+                onClick={() => setSelectedCert(null)}
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body cert-modal-body">
+              <img 
+                src={selectedCert.image} 
+                alt={selectedCert.title} 
+                className="cert-modal-image"
+              />
+            </div>
+
+            <div className="modal-footer">
+              <a 
+                href={selectedCert.image} 
+                download 
+                className="btn-secondary"
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Download size={14} />
+                <span>Open Full Size</span>
+              </a>
+
+              {selectedCert.verifyUrl && (
+                <a 
+                  href={selectedCert.verifyUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  <ExternalLink size={14} />
+                  <span>Verify Credential</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          RESUME MODAL
+          ========================================================= */}
+      {resumeModalOpen && (
+        <div className="modal-backdrop" onClick={() => setResumeModalOpen(false)}>
+          <div className="modal-dialog resume-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">Nandan Manjunath Naik — Resume</h3>
+                <p className="modal-subtitle">Software Developer · Backend & Microservices</p>
+              </div>
+              <button 
+                type="button" 
+                className="modal-close-btn"
+                onClick={() => setResumeModalOpen(false)}
+                aria-label="Close resume modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body resume-modal-body">
+              {/* Resume summary */}
+              <div className="resume-section-block">
+                <h4 className="resume-block-title">Summary</h4>
+                <p className="resume-block-text">
+                  Computer Science & Business Systems engineering student at PESCE Mandya (CGPA: 8.33/10, graduating 2027). Built and shipped production RESTful APIs and microservices using Python (FastAPI/Pydantic), SQL, Docker, and AWS across two engineering internships. Author of a peer-reviewed research paper on a graph- and algorithm-driven Swiss-system pairing engine (Scopus Indexed, AITC-2026).
+                </p>
+              </div>
+
+              {/* Education */}
+              <div className="resume-section-block">
+                <h4 className="resume-block-title">Education</h4>
+                <div className="resume-item">
+                  <div className="resume-item-top">
+                    <strong>PES College of Engineering, Mandya</strong>
+                    <span className="resume-date">2023 – 2027</span>
+                  </div>
+                  <div className="resume-item-sub">B.E. Computer Science & Business Systems · Current CGPA: 8.33 / 10</div>
+                </div>
+              </div>
+
+              {/* Experience */}
+              <div className="resume-section-block">
+                <h4 className="resume-block-title">Work Experience</h4>
+                <div className="resume-item">
+                  <div className="resume-item-top">
+                    <strong>Talenciaglobal — Software Engineering Intern</strong>
+                    <span className="resume-date">Apr 2026 – May 2026</span>
+                  </div>
+                  <ul className="resume-bullets">
+                    <li>Developed production RESTful APIs using FastAPI, Pydantic, Python, and SQL.</li>
+                    <li>Integrated microservices with Docker containerization and LangChain workflows.</li>
+                  </ul>
+                </div>
+
+                <div className="resume-item" style={{ marginTop: '12px' }}>
+                  <div className="resume-item-top">
+                    <strong>Employability.life — Cybersecurity & AWS Intern</strong>
+                    <span className="resume-date">Aug 2025 – Sep 2025</span>
+                  </div>
+                  <ul className="resume-bullets">
+                    <li>Deployed and monitored scalable cloud infrastructure on AWS (EC2, S3) with strict IAM roles.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Key Skills */}
+              <div className="resume-section-block">
+                <h4 className="resume-block-title">Technical Skills</h4>
+                <div className="resume-skills-group">
+                  <strong>Languages & Frameworks:</strong> Python, C++, C, JavaScript, React.js, FastAPI, Node.js, Express.js
+                </div>
+                <div className="resume-skills-group" style={{ marginTop: '4px' }}>
+                  <strong>Cloud & Databases:</strong> AWS (EC2, S3), Docker, PostgreSQL, MySQL, Supabase, Git
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <a 
+                href="mailto:nnaik5253@gmail.com?subject=Requesting%20PDF%20Resume&body=Hi%20Nandan,%20I%20would%20like%20to%20request%20your%20PDF%20resume."
+                className="btn-primary"
+              >
+                <Mail size={14} />
+                <span>Request Custom PDF via Email</span>
+              </a>
+
+              <button 
+                type="button" 
+                className="btn-secondary"
+                onClick={() => window.print()}
+              >
+                <Download size={14} />
+                <span>Print / Save as PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
       {copied && (
-        <div className="toast-notice" role="alert">
-          <Check size={16} color="#6366F1" />
+        <div className="toast-notification" role="status" aria-live="polite">
+          <Check size={16} />
           <span>Email copied to clipboard (nnaik5253@gmail.com)</span>
         </div>
       )}
